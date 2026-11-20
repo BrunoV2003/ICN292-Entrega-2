@@ -1,0 +1,226 @@
+{
+  "name": "SIG Minimarket - Alerta de reposición por correo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alerta-reposicion",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b2e0c3d5-0001-4c7f-8b20-000000000001",
+      "name": "Webhook: alerta desde la app",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "7c1f3a52-sig-minimarket-alerta-reposicion"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recibe el aviso del SIG Minimarket (alertas_n8n.py) cuando un producto entra\n// en v_alertas_reposicion. Tarea BPMN To-Be: \"Generar alerta de reposición\".\n// Revisa que vengan los datos y arma el asunto y el cuerpo del correo.\n\nconst body = $input.first().json.body || {};\nconst p = body.producto || {};\n\nconst faltantes = [];\nif (!p.nombre) faltantes.push('producto.nombre');\nif (body.stock_actual === undefined || body.stock_actual === null) faltantes.push('stock_actual');\nif (body.punto_reposicion === undefined || body.punto_reposicion === null) faltantes.push('punto_reposicion');\nif (faltantes.length > 0) {\n  return [{ json: { valido: false, alerta_id: body.alerta_id ?? null, faltantes } }];\n}\n\nconst esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst estados = { EN_UMBRAL: 'En el umbral', BAJO_UMBRAL: 'Bajo el umbral' };\nconst metodos = { AUTOMATICO_14_DIAS: 'automático (ventas de 14 días)', MANUAL_RESPALDO: 'mínimo manual' };\nconst origenes = { VENTA: 'una venta', AJUSTE: 'un ajuste o merma', ENTRADA: 'una entrada de mercadería', REVISION: 'una revisión manual' };\n\n// La fecha llega con hora de Chile (ej. 2026-11-20T14:35:02-03:00).\n// Se corta el texto para no convertirla a la hora del servidor de n8n.\nlet fecha = '';\nconst m = /^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})/.exec(body.detectada || '');\nif (m) fecha = `${m[3]}-${m[2]}-${m[1]} ${m[4]}:${m[5]}`;\n\nconst stock = Number(body.stock_actual);\nconst punto = Number(body.punto_reposicion);\nconst salir = Number(body.unidades_para_salir_de_alerta ?? (punto - stock + 1));\nconst pedidas = Number(body.unidades_en_pedidos_pendientes || 0);\nconst agotado = stock <= 0;\nconst estado = agotado ? 'AGOTADO' : (estados[body.estado_alerta] || 'En alerta');\nconst proveedor = body.proveedor && body.proveedor.nombre\n  ? body.proveedor.nombre + (body.proveedor.plazo_entrega_dias !== null && body.proveedor.plazo_entrega_dias !== undefined\n      ? ` (entrega en ${body.proveedor.plazo_entrega_dias} días)` : '')\n  : 'Sin proveedor principal registrado';\nconst pedidosTxt = pedidas > 0 ? `Ya hay ${pedidas} u. pedidas pendientes de recibir.` : 'No hay pedidos pendientes de este producto.';\nconst detectado = `Detectado por ${origenes[body.origen] || 'un movimiento de inventario'}${fecha ? ' el ' + fecha : ''}.`;\n\nconst asunto = `${body.prueba ? '[PRUEBA] ' : ''}${agotado ? '❗' : '⚠️'} Alerta de reposición: ${p.nombre} (stock ${stock})`;\n\nconst filas = [\n  ['Producto', `${p.nombre}${p.codigo_interno ? ' · ' + p.codigo_interno : ''}`],\n  ['Stock actual', `${stock} u.`],\n  ['Punto de reposición', `${punto} u. · ${metodos[body.metodo_calculo] || 'según el SIG'}`],\n  ['Estado', estado],\n  ['Para salir de alerta', `al menos ${salir} u. (no es la cantidad óptima de compra)`],\n  ['Proveedor', proveedor],\n  ['Pedidos pendientes', pedidosTxt],\n];\n\nconst html = [\n  '<div style=\"font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1f2937;max-width:560px\">',\n  body.prueba ? '<p style=\"background:#fef3c7;padding:8px 12px;border-radius:6px\"><b>MENSAJE DE PRUEBA:</b> no es una alerta real.</p>' : '',\n  `<h2 style=\"margin:0 0 4px;color:${agotado ? '#b91c1c' : '#b45309'}\">${agotado ? '❗' : '⚠️'} Alerta de reposición</h2>`,\n  '<p style=\"margin:0 0 14px;color:#6b7280\">SIG Minimarket</p>',\n  '<table style=\"border-collapse:collapse;width:100%\">',\n  ...filas.map(([k, v]) => `<tr><td style=\"padding:6px 10px;border-bottom:1px solid #e5e7eb;color:#6b7280;white-space:nowrap\">${esc(k)}</td><td style=\"padding:6px 10px;border-bottom:1px solid #e5e7eb\"><b>${esc(v)}</b></td></tr>`),\n  '</table>',\n  `<p style=\"margin:14px 0 4px\">${esc(detectado)}</p>`,\n  '<p style=\"margin:0\">Revisa el producto en el SIG (menú <b>Alertas</b>) y decide si haces el pedido.</p>',\n  '</div>',\n].join('');\n\nconst texto = [\n  body.prueba ? 'MENSAJE DE PRUEBA: no es una alerta real.' : null,\n  'Alerta de reposición - SIG Minimarket',\n  ...filas.map(([k, v]) => `${k}: ${v}`),\n  detectado,\n  'Revisa el producto en el SIG (menú Alertas) y decide si haces el pedido.',\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    valido: true,\n    alerta_id: body.alerta_id ?? null,\n    prueba: !!body.prueba,\n    producto: p.nombre,\n    asunto,\n    html,\n    texto,\n  },\n}];\n"
+      },
+      "id": "b2e0c3d5-0002-4c7f-8b20-000000000002",
+      "name": "Validar datos y armar correo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "b2e0c3d5-0003-4c7f-8b20-0000000000c1",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2e0c3d5-0003-4c7f-8b20-000000000003",
+      "name": "¿Datos válidos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "correo-de-la-encargada@ejemplo.com",
+        "subject": "={{ $json.asunto }}",
+        "emailType": "html",
+        "message": "={{ $json.html }}",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "SIG Minimarket"
+        }
+      },
+      "id": "b2e0c3d5-0004-4c7f-8b20-000000000004",
+      "name": "Enviar correo a la encargada",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        200
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, canal: 'correo', alerta_id: $('Validar datos y armar correo').first().json.alerta_id, gmail_id: $json.id || null }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "b2e0c3d5-0005-4c7f-8b20-000000000005",
+      "name": "Responder: enviado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, canal: 'correo', alerta_id: $('Validar datos y armar correo').first().json.alerta_id, error: ($json.error && ($json.error.message || $json.error)) || 'Error al enviar el correo' }) }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "b2e0c3d5-0006-4c7f-8b20-000000000006",
+      "name": "Responder: error al enviar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: false, alerta_id: $json.alerta_id, error: 'Faltan datos: ' + ($json.faltantes || []).join(', ') }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "b2e0c3d5-0007-4c7f-8b20-000000000007",
+      "name": "Responder: datos inválidos",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Alerta de reposición (BPMN To-Be)\nTareas BPMN que automatiza:\n- **Generar alerta de reposición** (To-Be reposición, lane Sistema)\n- **Evaluar alertas de reposición** (To-Be ventas)\n\nEl SIG (alertas_n8n.py) llama a este webhook cuando un producto ENTRA en la vista `v_alertas_reposicion` después de una venta, ajuste o entrada. n8n arma el correo y lo envía con Gmail a la encargada, que sigue con **Revisar producto con bajo stock**.\n\nLa respuesta (200 / 502 / 400) la usa el SIG para marcar el aviso como ENVIADA o ERROR en `sig_alerta_n8n`.",
+        "height": 320,
+        "width": 440,
+        "color": 4
+      },
+      "id": "b2e0c3d5-0008-4c7f-8b20-000000000008",
+      "name": "Nota: trazabilidad BPMN",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -80
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: alerta desde la app": {
+      "main": [
+        [
+          {
+            "node": "Validar datos y armar correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar datos y armar correo": {
+      "main": [
+        [
+          {
+            "node": "¿Datos válidos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Datos válidos?": {
+      "main": [
+        [
+          {
+            "node": "Enviar correo a la encargada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder: datos inválidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar correo a la encargada": {
+      "main": [
+        [
+          {
+            "node": "Responder: enviado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder: error al enviar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
