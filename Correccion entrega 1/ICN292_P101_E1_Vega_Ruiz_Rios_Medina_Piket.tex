@@ -1,47 +1,642 @@
-\begin{titlepage}
-\centering
-\begin{minipage}{0.48\textwidth}
-\includegraphics[width=0.75\textwidth]{fotos/logo-di-portada.png}
-\end{minipage}\hfill
-\begin{minipage}{0.48\textwidth}\raggedleft
-\includegraphics[width=0.33\textwidth]{fotos/logo-industrias.png}
-\end{minipage}
+\documentclass[10pt,a4paper]{article}
 
-\vspace*{2.6cm}
-\rule{\textwidth}{0.8pt}\\[0.35cm]
-{\Huge Propuestas SIG para PYME}\\[0.25cm]
-{\Large\scshape Sistemas de información para la gestión}\\[0.1cm]
-{\Large\scshape Entrega 1}\\[0.2cm]
-\rule{\textwidth}{0.8pt}\\[0.7cm]
+\input{config}
 
-{\large Minimarket Alma Neira Muñoz, Rengo}\\[1.2cm]
+% Paquetes adicionales usados en este main
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{booktabs}
 
-\raggedright
-{\large\textbf{Ficha del equipo}}\\[0.3cm]
-\small
-\begin{tabularx}{\textwidth}{@{}p{3.3cm}p{2.1cm}p{2.9cm}Y@{}}
+% Marca visible para información pendiente
+\newcommand{\falta}[1]{\textbf{\textcolor{red}{FALTA: #1}}}
+
+% Secciones del cuerpo rotuladas A a G
+\renewcommand{\thesection}{\Alph{section}}
+
+\begin{document}
+
+\input{portada}
+
+%==============================================
+% Índice
+%==============================================
+\setcounter{tocdepth}{2}
+\thispagestyle{plain}
+\tableofcontents
+\newpage
+\setcounter{page}{1}
+
+%==============================================
+% Desarrollo
+%==============================================
+
+\section{PYME y problema}
+%==============================================
+
+\subsection{Identificación de la PYME}
+
+El proyecto se desarrollará para un minimarket de tamaño pequeño ubicado en Rengo, Región de O'Higgins. El negocio funciona actualmente con una gestión principalmente manual y visual del inventario y con un seguimiento financiero interno limitado.
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Nombre de la PYME:} Minimarket Alma Neira Muñoz.
+    \item \textbf{Rubro:} minimarket / comercio minorista de productos de consumo habitual.
+    \item \textbf{Tamaño aproximado:} microempresa (clasificación oficial SII), categoría tributaria Primera, afecta a IVA. Atendida por una sola persona en jornada continua.
+    \item \textbf{Ubicación:} Pje. Carlos Isamitt 785, Rengo, Región de O'Higgins.
+\end{itemize}
+
+\subsection{Evidencia de existencia}
+
+La existencia de la PYME se verifica mediante Declaración Jurada de Inicio de Actividades emitida por el Servicio de Impuestos Internos (Folio N° 21007629601, trámite efectuado el 30-09-2021), que certifica el giro comercial (almacén, comestibles, bebidas, lácteos, frutas y verduras) y clasifica al negocio como micro empresa. El documento se adjunta en el Anexo~1 (Figura~\ref{fig:sii}), junto con una fotografía del local (Figura~\ref{fig:Foto_negocio}). La entrevista a la encargada, realizada el 2 de septiembre de 2026 con acta de consentimiento firmada, se resume en el Anexo~2.
+
+\subsection{Problema de gestión}
+
+El principal problema identificado es la ausencia de un sistema formal de gestión de inventario. Actualmente no existe un registro permanente que permita conocer con precisión cuánto stock hay de cada producto. La reposición se realiza principalmente de forma visual: cuando la encargada observa que queda poco de un producto, decide solicitar nuevas unidades al proveedor.
+
+Esta forma de operación dificulta conocer con trazabilidad:
+
+\begin{itemize}[leftmargin=*]
+    \item ¿Qué productos existen y cuáles se encuentran disponibles?
+    \item ¿Cuánto stock queda de cada producto?
+    \item ¿Cuánto stock ha ingresado y en qué fecha?
+    \item ¿A qué costo se adquirió cada reposición?
+    \item ¿Cuánto stock ha salido mediante ventas?
+    \item ¿Qué productos están próximos a agotarse?
+    \item ¿Cuántas veces se producen quiebres de stock?
+\end{itemize}
+
+Adicionalmente, el negocio no dispone de un seguimiento interno detallado que relacione las compras de mercadería, sus costos de adquisición, las ventas realizadas, los precios aplicados y los ingresos obtenidos. Existe información utilizada para obligaciones tributarias, pero no un sistema interno integrado que permita utilizar esos datos para apoyar decisiones operacionales.
+
+\subsubsection{Formulación medible del problema}
+
+El problema central de gestión radica en que el minimarket opera con un 0\% de trazabilidad digital e individual por producto, registrando únicamente el flujo monetario total diario a través del terminal POS sin desglose de artículos. Esta falta de registro unificado obliga a realizar controles de inventario 100\% visuales y manuales, lo que causa quiebres de stock recurrentes en ciclos de reposición rígidos de 15 días, pérdidas por merma no contabilizada y un tiempo perdido estimado de 1 a 2 horas diarias dedicadas exclusivamente a la revisión física de perchas e ingreso manual de datos.
+
+Para trazar los requisitos, el problema se separa en seis causas observadas en la entrevista: \textbf{P1} ventas sin producto ni cantidad; \textbf{P2} stock controlado a la vista y sin mínimo, con quiebres; \textbf{P3} 1 a 2 horas diarias de revisión; \textbf{P4} merma sin registro ni valor; \textbf{P5} sin historial de costos ni margen; \textbf{P6} diferencias de recepción sin registro.
+
+\subsection{Objetivo del SIG propuesto}
+
+El objetivo es desarrollar una aplicación local que permita registrar, controlar y consultar de forma integrada los productos, el inventario, las entradas de stock, los costos de adquisición, las ventas y la información financiera básica del minimarket.
+
+La decisión que el SIG mejora es \textbf{qué producto reponer y cuánto pedir}. Hoy la dueña o encargada la toma mirando las repisas; con el sistema la tomará con el stock y las ventas por producto. Como una sola persona atiende el local, la misma usuaria captura los datos y los usa para decidir. La Tabla~\ref{tab:niveles} ubica cada parte de la solución en su nivel decisional.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}p{2.5cm}Yp{3.4cm}p{2.3cm}@{}}
 \toprule
-\textbf{Integrante} & \textbf{Rol USM} & \textbf{Correo} & \textbf{Responsabilidad en el proyecto} \\
+\textbf{Nivel} & \textbf{Qué hace en el minimarket} & \textbf{Usuaria y momento} & \textbf{Requisitos} \\
 \midrule
-Bruno Vega Veloso & 202360680-4 & bvegav@usm.cl & Arquitectura, gestión del repositorio y backend \\
-Lorenzo Ruiz Flandez & 202304619-1 & lflandez@usm.cl & Requerimientos, trazabilidad y modelado BPMN \\
-Igor Ríos Rojas & 202360586-7 & irios@usm.cl & Modelado BPMN y diagramación en Bizagi \\
-Michelle Medina Barra & 202360506-9 & mmedinab@usm.cl & Levantamiento del caso, riesgos y Ley 21.719 \\
-Charles Piket Silva & 202360512-3 & cpiket@usm.cl & Modelo de datos y lógica de indicadores (KPI) \\
+TPS (operacional) & Captura en el origen ventas, recepciones y mermas con el lector de código de barras. & Encargada, en la caja y al recibir al repartidor. & RF01--RF07, RF09, RF14, RF15 \\
+MIS (control) & Compara el stock con el punto de reposición, genera alertas y la lista sugerida y resume los KPI semanales. & Dueña o encargada, al preparar el pedido y revisar la semana. & RF08, RF10, RF11, RF13 \\
+Apoyo a la decisión (acotado) & Sugiere la cantidad a pedir; la usuaria la ajusta por espacio en estantería y mínimos del proveedor. & Dueña o encargada, cuando pasa el preventista. & RF08, RF13 \\
 \bottomrule
 \end{tabularx}
+\caption{Niveles decisionales, usuarias y requisitos del SIG.}
+\label{tab:niveles}
+\end{table}
 
-\vspace{0.5cm}
-\begin{tabularx}{\textwidth}{@{}p{3.3cm}Y@{}}
-Carrera & Ingeniería Civil Industrial \\
-Asignatura & ICN-292 Sistemas de Información para la Gestión, 2026-2S \\
-Paralelo y grupo & P101 · Grupo Nº5 \\
-Repositorio & \url{https://github.com/BrunoV2003/ICN292-Entrega-1} \\
-\end{tabularx}
+No se plantea un EIS, porque el negocio no tiene un nivel directivo separado de la operación. El logro del objetivo se medirá en la Entrega 2 con los KPI de la Sección~\ref{sec:kpi}.
+
+%==============================================
+\section{Requerimientos desde cero}
+%==============================================
+
+\subsection{Actores y roles}
+
+Los actores identificados son los siguientes. Coinciden con los pools y lanes de los diagramas BPMN de la Sección~C.
+
+\begin{longtable}{|p{0.25\textwidth}|p{0.65\textwidth}|}
+\hline
+\textbf{Actor / sistema} & \textbf{Rol en la solución e información que produce o consume} \\
+\hline
+Dueña o encargada del minimarket & Usuaria principal de la aplicación. Registra productos, entradas de stock, mermas y ventas; consulta inventario, costos, historial, alertas e indicadores. \\
+\hline
+Proveedor (preventista y repartidor) & Actor externo de la reposición. Recibe el pedido, entrega productos y factura, y recibe las devoluciones de ítems no conformes. \\
+\hline
+Cliente & Actor externo de la venta. Entrega los productos a pagar y el pago; no se registran sus datos. \\
+\hline
+Lector de código de barras & Dispositivo que captura el identificador de productos durante la carga inicial, la venta y la recepción. \\
+\hline
+Google Drive & Servicio externo utilizado únicamente para mantener una copia de respaldo en la nube cuando exista conexión a Internet. \\
+\hline
+\end{longtable}
+
+
+\subsection{Alcance}
+\begin{itemize}
+\item \textbf{Dentro del Alcance}
+
+El sistema estará orientado principalmente a mejorar la gestión de inventario y ventas del minimarket mediante una aplicación local. La solución permitirá registrar los productos disponibles en el negocio, identificarlos a través de su código de barras y mantener actualizada la cantidad existente de cada uno. Para aquellos productos que no dispongan de código de barras, la aplicación generará automáticamente un identificador propio que permita reconocerlos dentro del sistema.
+
+La aplicación también permitirá registrar las nuevas entradas de mercadería. Cada vez que se incorpore stock de un producto se almacenará la cantidad recibida, el costo asociado a esa adquisición y la fecha del movimiento. De esta forma, además de conocer el inventario actual, se podrá mantener un historial de las distintas reposiciones realizadas. También se registrarán las mermas, los ajustes por conteo físico y las diferencias detectadas al recibir mercadería.
+
+Las ventas estarán integradas directamente con el inventario. Al registrar una venta, los productos podrán ser identificados mediante el lector de código de barras y, una vez confirmada la operación, la cantidad vendida se descontará automáticamente del stock disponible. Cada venta quedará almacenada junto con los productos involucrados, sus cantidades, el precio utilizado y el monto total de la transacción.
+
+Dentro del sistema también se considerará un apartado de gestión destinado a consultar el estado general del negocio. En este se podrá revisar el inventario disponible, identificar productos con bajo stock, consultar movimientos anteriores y acceder a información básica relacionada con ventas, costos e ingresos.
+
+Cada producto tendrá un punto de reposición. Cuando la cantidad disponible llegue a ese límite, la aplicación advertirá que es necesario reponer. El límite considera el ritmo de venta del producto y el tiempo que demora la llegada de nueva mercadería.
+
+La aplicación almacenará toda la información localmente en el computador del minimarket y deberá mantener los datos aunque el programa o el computador sean apagados. También se contempla un mecanismo de respaldo de la base de datos, con copias locales y la posibilidad de sincronizar una copia con Google Drive cuando exista conexión a Internet.
+\item \textbf{Fuera del Alcance}
+
+En esta primera etapa no se busca desarrollar un sistema contable completo ni reemplazar las herramientas utilizadas para declaraciones tributarias. La información financiera tendrá un carácter principalmente administrativo y permitirá relacionar las ventas realizadas con los costos registrados para obtener información básica sobre el desempeño del negocio.
+
+Tampoco se considera el funcionamiento simultáneo desde múltiples computadores o cajas. El sistema estará pensado para funcionar en un único computador Windows y ser utilizado por una persona a la vez.
+
+Quedan fuera de la Entrega 2 el cierre de caja, las devoluciones de clientes, las anulaciones de ventas ya confirmadas, las promociones, los productos vendidos por peso y la integración con la máquina de pago. Se evaluarán después si el tiempo lo permite.
+
+\end{itemize}
+
+\subsection{Requisitos funcionales}
+
+A partir de las necesidades identificadas para el minimarket, se definieron las funciones que deberá realizar la aplicación. Se priorizan con MoSCoW: un requisito es \textbf{Must} si sin él no se resuelve el problema central (ventas sin detalle y reposición a la vista); \textbf{Should} si agrega control o medición, aunque el flujo de venta y reposición funciona sin él; y \textbf{Could} si es deseable y se implementa solo si queda tiempo en la Entrega 2.
+
+\small
+\begin{longtable}{@{}p{0.9cm}p{3.2cm}p{9.6cm}p{1.3cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Nombre} & \textbf{Descripción (actor + acción + dato)} & \textbf{Prioridad} \\
+\midrule
+\endhead
+RF01 & Registro de productos & La encargada registra, edita y lista productos con código, nombre, precio de venta, proveedor habitual y días de seguridad. & Must \\
+RF02 & Identificación de productos & Si el producto tiene código de barras, ese es su identificador. Si no, el sistema genera un código propio con prefijo 2, que GS1 reserva para uso interno y no choca con un código comercial. & Must \\
+RF03 & Ingreso de stock & La encargada registra cada recepción (proveedor, factura, fecha) y las cantidades aceptadas por producto; el sistema suma esas unidades al stock. & Must \\
+RF04 & Registro de costos & Cada línea de recepción guarda su costo unitario; el sistema recalcula el costo promedio ponderado del producto. & Must \\
+RF05 & Registro de ventas & La encargada registra ventas con uno o más productos; el sistema muestra cantidades, precios, total y medio de pago (efectivo o tarjeta). & Must \\
+RF06 & Actualización automática del inventario & Al confirmar la venta, el sistema descuenta el stock en la misma transacción; si algo falla, no se guarda nada. & Must \\
+RF07 & Conservación del historial de ventas & El detalle de cada venta guarda precio y costo del momento; un cambio posterior de precio no altera ventas pasadas. & Must \\
+RF08 & Control de stock mínimo & El sistema marca los productos con stock en o bajo su punto de reposición $PR = \bar d_{14}\cdot L + 1{,}5\,\bar d_{14}$ y genera la lista sugerida (Sección~\ref{sec:pr}). & Must \\
+RF09 & Uso del lector de código de barras & En la creación de productos, el ingreso de stock y la venta, el sistema acepta la lectura del lector USB sin hacer clic en el campo. & Should \\
+RF10 & Indicadores de gestión & El panel muestra ventas diarias, unidades por producto, quiebres, precisión de inventario, merma y cobertura. & Should \\
+RF11 & Información financiera básica & El sistema calcula el margen bruto de un período: $MB=\sum q_i(p_i-c_i)$ y $MB\%=MB/\sum q_i p_i$ (Sección~\ref{sec:margen}). & Should \\
+RF14 & Mermas y ajustes & La encargada registra mermas (vencimiento, daño, pérdida) y ajustes por conteo con producto, cantidad y motivo; el sistema descuenta stock y valoriza al costo promedio. & Should \\
+RF12 & Respaldo de información & El sistema genera copias de la base de datos y, con Internet, sincroniza una copia con Google Drive. & Could \\
+RF13 & Exportación de reportes & La encargada exporta la lista de reposición y los reportes en CSV. & Could \\
+RF15 & Diferencias de recepción & La encargada registra por línea la cantidad rechazada y el motivo (faltante, dañado o por vencer, precio distinto). & Could \\
+\bottomrule
+\end{longtable}
 \normalsize
 
-\vfill
-\centering
-{\scshape noviembre, 2026}\\[0.3cm]
-{\scshape Campus Vitacura}
-\end{titlepage}
+\subsection{Requisitos no funcionales}
+
+Además de las funciones que realizará la aplicación, se establecen las condiciones que deberá cumplir. Cada una tiene un criterio que se puede comprobar en la Entrega 2.
+
+\small
+\begin{longtable}{@{}p{1.1cm}p{2.1cm}p{5.0cm}p{6.6cm}@{}}
+\toprule
+\textbf{ID} & \textbf{Atributo} & \textbf{Requisito} & \textbf{Criterio de verificación} \\
+\midrule
+\endhead
+RNF01 & Disponibilidad & Corre en \texttt{localhost} y no necesita Internet para la operación diaria. & Con la red desconectada se completan una venta, una recepción, una merma y la consulta de alertas. \\
+RNF02 & Integridad & Un corte eléctrico o cierre abrupto no deja ventas ni recepciones a medias. & SQLite en modo WAL y una transacción por operación. Tras 20 cierres forzados durante ventas, \texttt{PRAGMA integrity\_check} devuelve \texttt{ok} y no hay ventas sin detalle. \\
+RNF03 & Rendimiento & Búsqueda por escaneo y registro de ventas rápidos. & Con 5.000 productos y 50.000 líneas de venta de prueba: búsqueda $\le$ 1 s y confirmación de venta $\le$ 2 s. \\
+RNF04 & Usabilidad & Pensada para una usuaria con alfabetización digital básica, con teclado y lector. & Una venta de 3 productos se hace con 3 lecturas y 1 tecla, sin mouse. La encargada registra una venta y una recepción sin ayuda tras 15 minutos de inducción. \\
+RNF05 & Compatibilidad & Funciona en el computador del local. & Windows 10 y 11 de 64 bits, Python 3.12 o superior, Chrome o Edge. Un tercero lo instala con el README en 15 minutos o menos. \\
+RNF06 & Seguridad (acceso) & Solo la usuaria autorizada entra al panel, a los respaldos y a la restauración. & Login obligatorio, contraseña como hash (Werkzeug), cierre de sesión tras 15 minutos sin uso y servidor solo en \texttt{127.0.0.1}. Desde otro equipo de la red no se accede. \\
+RNF07 & Privacidad (Ley 21.719) & Solo se guardan los datos personales necesarios. & Sin campos de RUT, nombre ni tarjeta de clientes; de proveedores solo razón social y teléfono comercial; credenciales en \texttt{.env} fuera del repositorio; repositorio solo con datos sintéticos. \\
+RNF08 & Recuperabilidad & Los datos se pueden restaurar si el archivo local se daña. & Cinco respaldos rotativos con fecha y al menos uno diario. La copia más reciente se restaura en un equipo limpio en 5 minutos o menos y pasa \texttt{integrity\_check}. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Priorización y trazabilidad con el problema}
+
+Las funciones definidas responden a las causas del problema levantadas en la entrevista. La encargada confirmó que la detección de bajo stock depende de la observación visual, sin cantidad mínima definida ni registro alguno, y que no se registra el costo de cada reposición ni la cantidad vendida por producto, conociéndose únicamente el monto total de venta del día. La Tabla~\ref{tab:traza} muestra qué causa ataca cada requisito y qué KPI alimenta.
+
+\begin{table}[H]
+\centering\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llccccccl@{}}
+\toprule
+\textbf{Requisito} & \textbf{Prioridad} & \textbf{P1} & \textbf{P2} & \textbf{P3} & \textbf{P4} & \textbf{P5} & \textbf{P6} & \textbf{KPI} \\
+\midrule
+RF01 Productos & Must & X & X & & & & & Base \\
+RF02 Código interno & Must & X & & & & & & KPI1 \\
+RF03 Ingreso de stock & Must & & X & & & X & & KPI4, KPI7 \\
+RF04 Costos & Must & & & & & X & & KPI6 \\
+RF05 Ventas & Must & X & & & & & & KPI1 \\
+RF06 Rebaja de inventario & Must & X & X & & & & & KPI3, KPI4 \\
+RF07 Historial de ventas & Must & & & & & X & & KPI6 \\
+RF08 Punto de reposición & Must & & X & X & & & & KPI2, KPI3 \\
+RF09 Lector & Should & X & & X & & & & KPI2 \\
+RF10 Indicadores & Should & X & X & X & X & X & X & Todos \\
+RF11 Margen bruto & Should & & & & & X & & KPI6 \\
+RF14 Mermas y ajustes & Should & & X & & X & & & KPI4, KPI5 \\
+RF12 Respaldo & Could & & & & & & & (RNF08) \\
+RF13 Exportación CSV & Could & & X & X & & & & KPI2 \\
+RF15 Diferencias & Could & & & & & & X & KPI8 \\
+\bottomrule
+\end{tabular}
+\caption{Matriz de trazabilidad requisito--problema (causas P1 a P6 de la Sección~A.3).}
+\label{tab:traza}
+\end{table}
+
+RF12 no ataca una causa del problema: reduce el riesgo de perder los datos que generan los demás requisitos, y por eso es Could. De esta manera, la aplicación no se limita a registrar información: usa los datos de la operación diaria para apoyar las decisiones de reposición y entregar una visión más clara del movimiento económico del minimarket.
+
+%==============================================
+\section{Procesos BPMN}
+%==============================================
+
+Los tres diagramas se modelaron en Bizagi Modeler (archivo \texttt{assets/modelo\_procesos\_minimarket.bpm} del repositorio) y se presentan en páginas horizontales para que se puedan leer. Usan un pool por participante, tareas tipificadas con verbo y objeto (manual, de usuario, de servicio, de envío y de recepción), compuertas exclusivas con ramas Sí/No y eventos de fin con estado nombrado. Los puntos de dolor del as-is y los KPI del to-be van como anotaciones asociadas a la tarea correspondiente.
+
+\subsection{Proceso actual (As-Is)}
+
+Actualmente, la gestión del inventario del minimarket se realiza principalmente de forma manual y visual: no existe un sistema que permita consultar de manera inmediata la cantidad disponible de cada producto ni un registro que relacione directamente las entradas de mercadería con las unidades que posteriormente son vendidas.
+
+De acuerdo con la entrevista realizada a la encargada, la necesidad de reposición se detecta mediante revisión visual diaria de las estanterías. No existe una cantidad mínima definida; la decisión se toma al ojo, apoyándose en la velocidad de venta de cada producto y dejando que la mercadería se agote casi por completo antes de reponer, lo que la propia encargada describe como su práctica habitual.
+
+Detectada la falta de un producto, el pedido se realiza principalmente de forma presencial cuando el proveedor visita el local (varios proveedores pasan con alta frecuencia, incluso a diario), aunque ocasionalmente se hace por WhatsApp o mediante llamada de un call center. La cantidad mínima a pedir la fija cada proveedor (varía entre 4, 6, 9 o 12 unidades según el producto), y la encargada ajusta la cantidad adicional según la rotación del producto y el espacio disponible en estantería, dado que el local no cuenta con bodega. El pedido queda anotado en un cuaderno personal con el proveedor, el valor a cancelar y la fecha de llegada, pero esta anotación no constituye un registro de inventario.
+
+Al recibir la mercadería, la encargada revisa la factura, las cantidades y las fechas de vencimiento, pero no registra en ningún sistema cuántas unidades ingresaron ni el costo de adquisición, ya que hacerlo durante la atención del local resulta difícil. Si la mercadería no coincide con la factura, la diferencia se informa al repartidor, que ajusta la factura o retira los productos; ese camino de excepción no deja registro. Los productos se colocan directamente en las estanterías. Las facturas se conservan por una semana y las boletas de venta (efectivo y tarjeta) se revisan semanalmente, pero ninguna de ellas se desagrega por producto. La Figura~\ref{fig:bpmn-asis} muestra el proceso con sus siete puntos de dolor (D1 a D7).
+
+
+\subsection{Proceso propuesto (To-Be)}
+
+Con la incorporación del sistema, la gestión del inventario dejará de depender exclusivamente de la observación de la encargada. El rediseño se presenta en dos diagramas. El diagrama A (Figura~\ref{fig:bpmn-tobe-a}) termina con el evento ``Alerta de reposición activa'' y el diagrama B (Figura~\ref{fig:bpmn-tobe-b}) empieza con un evento condicional del mismo nombre.
+
+\textbf{Venta, ajustes y detección automática (A).} La venta empieza cuando el cliente llega a caja. La encargada escanea los productos y el sistema busca cada uno con su precio vigente; si un producto no está registrado, lo crea con un código interno en ese momento. El sistema calcula el total y la encargada cobra. Si el pago no se concreta, la venta termina sin tocar el stock; si se acepta, el sistema registra la venta y rebaja el stock en una sola transacción. Las mermas tienen su propio inicio: la encargada registra producto, cantidad y motivo, y el sistema descuenta el stock. Ventas y mermas convergen en la comparación del stock con el punto de reposición, que termina en ``stock suficiente'' o genera la alerta y la lista sugerida.
+
+\textbf{Pedido, recepción y registro (B).} Con la alerta activa, la encargada revisa la lista sugerida y ajusta las cantidades; puede postergar el pedido (la alerta sigue activa) o enviarlo al proveedor. Al llegar la mercadería verifica cantidades, costos y vencimientos. El rechazo ya no vuelve al pedido: si hay diferencias, las registra en la app y devuelve los ítems no conformes al repartidor, y el proveedor emite una nota de crédito o reprograma el faltante. Con lo aceptado, la encargada escanea los productos e ingresa cantidad y costo, y el sistema registra la entrada, aumenta el stock y recalcula el costo promedio. Si el faltante deja el producto bajo su punto de reposición, el diagrama A vuelve a generar la alerta en la siguiente venta o ajuste.
+
+
+
+\subsection{Cambios esperados en el proceso}
+
+La principal diferencia entre ambos procesos será la existencia de información actualizada sobre el inventario. Actualmente la necesidad de compra se identifica principalmente observando físicamente los productos. Con el sistema propuesto, esta decisión podrá apoyarse en el stock registrado y en un punto de reposición definido para cada producto. Asimismo, las entradas y salidas de mercadería dejarán de ser movimientos aislados: una entrada aumentará el inventario y conservará su costo de adquisición, mientras que una venta disminuirá automáticamente el stock y generará un registro permanente de la transacción.
+
+La Tabla~\ref{tab:mejoras} vincula cada mejora con el punto de dolor que resuelve, indica si se automatiza, se controla o se mide, y muestra el KPI con su valor antes y la meta después.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}p{2.6cm}Yp{1.6cm}p{2.6cm}p{1.7cm}p{1.8cm}@{}}
+\toprule
+\textbf{Punto de dolor} & \textbf{Cambio en el to-be} & \textbf{Tipo} & \textbf{KPI} & \textbf{Antes} & \textbf{Meta E2} \\
+\midrule
+D6 Ventas sin detalle & Escaneo en caja; venta y rebaja en una transacción (RF05, RF06) & Automatiza & KPI1 Trazabilidad de ventas & 0\,\% & $\ge$ 95\,\% \\
+D1 Revisión visual diaria & Comparación automática con el punto de reposición y alerta (RF08) & Automatiza & KPI2 Tiempo diario de control & 60 a 120 min & $\le$ 15 min \\
+D2 Cantidad por experiencia & Lista sugerida que la encargada ajusta (RF08, RF13) & Controla & KPI3 Quiebres por semana & Sin medición & $-50$\,\% \\
+D3 Cuaderno como registro & Alertas y lista guardadas en la app & Controla & KPI7 Cobertura (días) & Sin medición & Semáforo \\
+D4 Diferencias sin registro & Registro de diferencias y devolución (RF15) & Controla y mide & KPI8 Recepciones con diferencias & Sin registro & Por proveedor \\
+D5 Ingreso sin cantidad ni costo & Escaneo de lo aceptado con costo; costo promedio automático (RF03, RF04) & Automatiza y mide & KPI4 Precisión / KPI6 Margen & Sin medición & $\ge$ 95\,\% / semanal \\
+D7 Merma sin registro & Registro de merma con motivo y valor (RF14) & Mide & KPI5 Merma valorizada & No cuantificada & 100\,\% registrada \\
+\bottomrule
+\end{tabularx}
+\caption{Mejoras del to-be respecto del as-is, con su KPI antes y después.}
+\label{tab:mejoras}
+\end{table}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth]{fotos/bpmn-as-is.png}
+    \caption{BPMN As-Is: control y reposición de inventario. Las anotaciones grises marcan los puntos de dolor.}
+    \label{fig:bpmn-asis}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth]{fotos/bpmn-to-be-a.png}
+    \caption{BPMN To-Be A: venta, ajustes de inventario y detección automática de reposición.}
+    \label{fig:bpmn-tobe-a}
+\end{figure}
+\end{landscape}
+
+\begin{landscape}
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\linewidth]{fotos/bpmn-to-be-b.png}
+    \caption{BPMN To-Be B: pedido, recepción con manejo de diferencias y registro de entrada.}
+    \label{fig:bpmn-tobe-b}
+\end{figure}
+\end{landscape}
+
+%==============================================
+\section{Modelo de datos preliminar}
+%==============================================
+
+El ER no se evalúa en esta entrega; se incluye para orientar la Entrega 2. El elemento central es el producto, identificado por su código de barras o por el código interno. Cada recepción y cada venta se guardan como registros independientes con su detalle, porque un mismo producto se compra y se vende muchas veces a distintos costos y precios. La Figura~\ref{fig:er} muestra las entidades, sus claves y cardinalidades.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{fotos/er-preliminar.pdf}
+    \caption{ER preliminar con claves primarias (PK), foráneas (FK) y cardinalidades en notación pata de gallo.}
+    \label{fig:er}
+\end{figure}
+
+Las relaciones N:M entre venta y producto, y entre recepción y producto, se resuelven con DETALLE\_VENTA y DETALLE\_RECEPCION, cuya PK es compuesta. El precio y el costo se copian en DETALLE\_VENTA al vender, para que un cambio de precio posterior no modifique ventas pasadas. No existe una entidad cliente: la venta guarda solo el medio de pago. El punto de reposición no se almacena, se calcula. Ninguna tarea borra registros; las correcciones se hacen con un ajuste de inventario para no perder la historia. La Tabla~\ref{tab:crud} muestra qué entidad usa cada tarea del to-be.
+
+\begin{table}[H]
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+\textbf{Tarea del to-be} & \textbf{Diag.} & \textbf{Producto} & \textbf{Proveedor} & \textbf{Venta} & \textbf{Recepción} & \textbf{Ajuste} \\
+\midrule
+Buscar producto y precio vigente & A & R & & & & \\
+Registrar producto con código interno & A & C & R & & & \\
+Registrar venta y rebajar stock & A & U & & C & & \\
+Registrar merma con motivo y cantidad & A & U & & & & C \\
+Comparar stock / generar alerta y lista & A & R & R & R & & \\
+Revisar lista sugerida y ajustar cantidades & B & R & R & & & \\
+Registrar diferencia de recepción & B & & R & & C & \\
+Escanear productos aceptados (cantidad y costo) & B & R & & & C & \\
+Registrar entrada y recalcular costo promedio & B & U & & & R & \\
+\bottomrule
+\end{tabular}
+\caption{Trazabilidad tarea BPMN $\rightarrow$ entidad (C: crea, R: lee, U: actualiza). VENTA y RECEPCION incluyen sus tablas de detalle.}
+\label{tab:crud}
+\end{table}
+
+%==============================================
+\section{Arquitectura lógica y stack tentativo}
+%==============================================
+
+\subsection{Funcionamiento general}
+
+La aplicación será ejecutada en un único computador ubicado en el minimarket y utilizará una interfaz web accesible desde el navegador mediante \texttt{localhost}. Aunque visualmente funcione como una página web, las operaciones principales se realizarán directamente en el equipo y no dependerán de una conexión permanente a Internet. La conexión a Internet tendrá un propósito secundario: mantener una copia de respaldo en la nube. Una pérdida de conexión no deberá impedir registrar productos, realizar ventas, modificar inventario o consultar información.
+
+La Figura~\ref{fig:arq} muestra los cuatro componentes (captura, persistencia, analítica/KPI e interfaz de gestión), la lógica de negocio que los conecta y las tareas del to-be que atiende cada uno.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fotos/arquitectura-logica.pdf}
+    \caption{Arquitectura lógica, flujos de datos entre componentes y tareas BPMN que atiende cada uno.}
+    \label{fig:arq}
+\end{figure}
+
+\small
+\begin{longtable}{@{}p{0.5cm}p{3.2cm}p{5.6cm}p{5.4cm}@{}}
+\toprule
+\textbf{N°} & \textbf{Origen $\rightarrow$ destino} & \textbf{Dato} & \textbf{Tarea del to-be} \\
+\midrule
+\endhead
+1 & Lector $\rightarrow$ captura & Código EAN o interno (el lector funciona como teclado) & Escanear productos / Escanear productos aceptados \\
+2 & Captura $\rightarrow$ lógica & Venta, recepción o merma en JSON & Cobrar al cliente / Registrar merma / Registrar diferencia \\
+3 & Lógica $\rightarrow$ persistencia & Inserción del registro y su detalle, y actualización del stock en la misma transacción & Registrar venta y rebajar stock / Registrar entrada y costo promedio \\
+4 & Lógica $\rightarrow$ analítica & Aviso de que cambió el stock de un producto & Comparar stock con punto de reposición \\
+5 & Persistencia $\rightarrow$ analítica & Ventas de 14 días, stock, ajustes y plazos de proveedor & Generar alerta y lista sugerida \\
+6 & Analítica $\rightarrow$ interfaz & Alertas, lista sugerida y KPI & Revisar lista sugerida y ajustar cantidades \\
+7 & Interfaz $\rightarrow$ lógica & Cantidades ajustadas y exportación CSV & Enviar pedido al proveedor \\
+8 & Persistencia $\rightarrow$ respaldos $\rightarrow$ Drive & Copia del archivo de base de datos & Fuera del BPMN (RNF08, RF12) \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\subsection{Tecnologías y versiones}
+
+Para la interfaz se utilizará HTML, CSS y JavaScript, debido a que la aplicación será utilizada desde un navegador. Para procesar las operaciones se utilizará Python con Flask, responsable de recibir la información de la interfaz, aplicar las reglas y comunicarse con la base de datos. Como almacenamiento se utilizará SQLite, que mantiene la información en un único archivo local y resulta adecuado para un solo computador y una persona a la vez.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}p{3.0cm}p{3.6cm}p{3.4cm}Y@{}}
+\toprule
+\textbf{Capa} & \textbf{Tecnología} & \textbf{Versión} & \textbf{Justificación} \\
+\midrule
+Servidor y lógica & Python + Flask & Python $\ge$ 3.12 (probado 3.13); Flask 3.1.3 & Liviano y local; Werkzeug (incluido) entrega el hash de contraseñas. \\
+Base de datos & SQLite (\texttt{sqlite3}) & Incluida en Python & Un archivo, sin instalación; modo WAL para RNF02. \\
+Interfaz & HTML, CSS, JavaScript & Chrome o Edge actuales & Ya instalados en el equipo del local. \\
+Gráficos de KPI & Chart.js & 4.6.1 (copia local) & Funciona sin Internet (RNF01). \\
+Respaldo en la nube & google-api-python-client, google-auth-oauthlib, python-dotenv & 2.202.0, 1.5.0, 1.2.4 & Solo para RF12; credenciales en \texttt{.env}. \\
+Pruebas & pytest & 9.2.0 & Casos de RF06, RF08 y RF11. \\
+\bottomrule
+\end{tabularx}
+\caption{Stack tentativo con versiones fijadas en \texttt{requirements.txt}.}
+\end{table}
+
+\textbf{Pasos para levantarlo en localhost (Windows).} Con Python y Git instalados, los comandos previstos son los siguientes. El comando \texttt{init-db} y la estructura \texttt{app/} se crean en el hito 4 del plan; el detalle está en \texttt{docs/04-arquitectura-plan.md}.
+
+\begin{small}
+\begin{verbatim}
+git clone https://github.com/BrunoV2003/ICN292-Entrega-1.git
+cd ICN292-Entrega-1
+py -3.13 -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+copy .env.example .env        (solo si se usara el respaldo en Google Drive)
+flask --app app init-db       (crea minimarket.db con datos sinteticos)
+flask --app app run --host 127.0.0.1 --port 5000
+\end{verbatim}
+\end{small}
+
+Luego se abre \url{http://127.0.0.1:5000} en Chrome o Edge.
+
+\subsection{Persistencia y respaldo}
+
+Toda la información necesaria para el funcionamiento cotidiano se almacenará localmente, de modo que los productos, el inventario, los costos y las ventas permanezcan disponibles aunque se cierre el navegador, se reinicie la aplicación o se apague el computador. El respaldo se generará automáticamente cuando la aplicación se cierre correctamente, una vez al día, y mediante una opción manual.
+
+\begin{itemize}
+    \item \textbf{Política de retención:} rotación fija de hasta \textbf{5 versiones} de la base de datos (FIFO). Cada archivo incluye una marca temporal (por ejemplo, \texttt{backup\_minimarket\_YYYYMMDD\_HHMM.db}), evitando que un fallo local sobrescriba toda la historia.
+    \item \textbf{Restauración:} desde el panel de gestión, con sesión iniciada, la usuaria elige una versión. Antes de sobrescribir, el sistema corre \texttt{PRAGMA integrity\_check} sobre la copia y guarda el archivo actual aparte, para poder deshacer.
+    \item \textbf{Integración con Google Drive:} Google Drive API v3 en Python con autenticación \texttt{OAuth 2.0}, hacia una carpeta privada de la cuenta del negocio. Los tokens y credenciales se guardan en \texttt{.env}, fuera del repositorio.
+\end{itemize}
+
+\subsection{Capa analítica: indicadores}
+\label{sec:kpi}
+
+La información almacenada no solo permitirá registrar las operaciones del negocio, sino que también se utilizará para apoyar decisiones cotidianas. La Tabla~\ref{tab:kpi} define cada indicador, su fuente en la base de datos y su línea base. Las líneas base de KPI1 y KPI2 vienen de la entrevista; las metas son propuestas del equipo y se ajustarán con las primeras semanas de datos.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}p{2.8cm}Yp{2.8cm}p{1.8cm}p{2.0cm}@{}}
+\toprule
+\textbf{KPI} & \textbf{Fórmula} & \textbf{Fuente} & \textbf{Línea base} & \textbf{Meta E2} \\
+\midrule
+KPI1 Trazabilidad de ventas & ventas con detalle / ventas del POS $\times$ 100 & VENTA, boletas POS & 0\,\% & $\ge$ 95\,\% \\
+KPI2 Tiempo de control & minutos diarios en revisar stock y armar pedido & Registro de la encargada & 60--120 min & $\le$ 15 min \\
+KPI3 Quiebres & productos que llegan a stock 0 por semana & DETALLE\_\allowbreak VENTA, AJUSTE & Sin medición & $-50$\,\% \\
+KPI4 Precisión de inventario & productos con stock = conteo / contados $\times$ 100 & AJUSTE (conteo) & Sin medición & $\ge$ 95\,\% \\
+KPI5 Merma valorizada & $\sum$ cantidad mermada $\times$ costo promedio, por mes & AJUSTE & No cuantificada & 100\,\% registrada \\
+KPI6 Margen bruto & $\sum q(p-c) / \sum q\,p$ & DETALLE\_VENTA & Desconocido & Semanal \\
+KPI7 Cobertura & stock actual / $\bar d_{14}$ (días) & PRODUCTO, DETALLE\_VENTA & Sin medición & Semáforo \\
+KPI8 Recepciones con diferencias & recepciones con rechazo / recepciones $\times$ 100 & DETALLE\_\allowbreak RECEPCION & Sin registro & Por proveedor \\
+\bottomrule
+\end{tabularx}
+\caption{Indicadores de gestión que calcula la capa analítica.}
+\label{tab:kpi}
+\end{table}
+
+\subsubsection{Punto de reposición}
+\label{sec:pr}
+
+El nivel mínimo de inventario no se establecerá de manera arbitraria, sino a partir del consumo habitual del producto y del tiempo que tarda en llegar una nueva reposición:
+
+\begin{equation}
+PR = \bar d_{14}\cdot L + SS, \qquad SS = 1{,}5\cdot \bar d_{14}
+\end{equation}
+
+\begin{itemize}
+    \item \textbf{Consumo diario ($\bar d_{14}$):} promedio de las ventas reales de los últimos \textbf{14 días}.
+    \item \textbf{Plazo del proveedor ($L$):} según la entrevista, los distribuidores habituales entregan en \textbf{2 a 3 días}. Es configurable por proveedor.
+    \item \textbf{Margen de seguridad ($SS$):} reserva equivalente a \textbf{1,5 días} de venta, para absorber alzas de demanda o atrasos del camión repartidor.
+\end{itemize}
+
+Si un producto vende en promedio 10 unidades al día y su proveedor tarda 2 días, la alerta aparece cuando el stock cae a 35 unidades ($10 \times 2 + 15$). Este caso se usará como prueba de RF08.
+
+\subsubsection{Margen bruto y costo promedio ponderado}
+\label{sec:margen}
+
+Cada entrada de mercadería conservará su costo de adquisición, y cada venta, el precio real utilizado. Con un mismo producto comprado a distintos precios, el sistema usa el \textbf{costo promedio ponderado}: al llegar mercadería recalcula el costo promedio con las unidades que quedaban y las nuevas, y al vender copia ese costo en el detalle de la venta. Con esos valores congelados, el margen bruto de un período es:
+
+\begin{equation}
+MB = \sum_i q_i\,(p_i - c_i), \qquad MB\% = \frac{MB}{\sum_i q_i\,p_i}
+\end{equation}
+
+donde $q_i$ es la cantidad vendida en la línea $i$, $p_i$ el precio cobrado y $c_i$ el costo promedio vigente en esa venta. Este resultado no es la utilidad final del negocio, porque no incluye arriendo, remuneraciones, electricidad, impuestos ni otros costos administrativos.
+
+%==============================================
+\section{Plan de Entrega 2 y riesgos}
+%==============================================
+
+\subsection{Plan de trabajo}
+
+El trabajo se dividirá en hitos consecutivos, de manera que las funciones principales se desarrollen y prueben antes de incorporar componentes secundarios. Cada hito indica los requisitos que cubre.
+
+\small
+\begin{longtable}{|p{0.02\textwidth}|p{0.25\textwidth}|p{0.24\textwidth}|p{0.13\textwidth}|p{0.11\textwidth}|>{\raggedright\arraybackslash}p{0.1\linewidth}|}
+\hline
+\textbf{Nº} & \textbf{Hito} & \textbf{Resultado esperado} & \textbf{Requisitos} & \textbf{Responsable} & \textbf{Fecha}\\
+\hline
+1 & Completar el levantamiento del proceso actual. & Proceso actual documentado y validado. & P1 a P6 & Charles & 21 sep \\
+\hline
+2 & Finalizar los BPMN As-Is y To-Be. & Diagramas definitivos. & -- & Igor & 28 sep \\
+\hline
+3 & Cerrar el modelo de datos. & ER definitivo y tablas. & RF01 a RF15 & Michelle & 5 oct \\
+\hline
+4 & Estructura inicial de la aplicación local. & App en localhost con login. & RNF01, RNF05, RNF06 & Lorenzo & 12 oct \\
+\hline
+5 & Productos e inventario. & Productos, entradas, costos, mermas e historial. & RF01--RF04, RF09, RF14 (RF15) & Bruno y Michelle & 12--26 oct \\
+\hline
+6 & Sistema de ventas. & Ventas y rebaja automática del inventario. & RF05--RF07 & Charles & 26 oct \\
+\hline
+7 & Gestión e indicadores. & Alertas, lista sugerida, KPI y CSV. & RF08, RF10, RF11, RF13 & Lorenzo & 2 nov \\
+\hline
+8 & Mecanismo de respaldo. & Copias locales y sincronización con Drive. & RF12, RNF08 & Igor & 9 nov \\
+\hline
+9 & Pruebas integrales. & Inventario, ventas, historial y respaldos probados juntos. & RNF02--RNF04 & Igor y Charles & 9 nov \\
+\hline
+10 & Documentación y versión final. & Sistema reproducible y repositorio actualizado. & RNF05 & Todos & 16 nov \\
+\hline
+\end{longtable}
+\normalsize
+
+\subsection{Riesgos del proyecto}
+
+Los principales riesgos se relacionan con la calidad de los datos iniciales, la consistencia entre ventas e inventario, el acceso a la información, la restauración de respaldos y la configuración de los niveles de reposición. P es probabilidad e I impacto (A alta, M media, B baja).
+
+\small
+\begin{longtable}{|p{0.25\textwidth}|c|c|p{0.22\textwidth}|p{0.33\textwidth}|}
+\hline
+\textbf{Riesgo} & \textbf{P} & \textbf{I} & \textbf{Posible consecuencia} & \textbf{Medida considerada} \\
+\hline
+\endhead
+Carga inicial incorrecta del inventario. & A & A & El stock de la aplicación no representa la cantidad del local. & Conteo físico durante la carga inicial y primer conteo cíclico a la semana (KPI4). \\
+\hline
+Venta registrada sin actualización del inventario. & M & A & Diferencias entre ventas y stock. & Venta y descuento de stock en una misma transacción (RF06, RNF02). \\
+\hline
+Pérdida o corrupción de la base de datos local. & B & A & Pérdida parcial o total de la historia. & Modo WAL, 5 respaldos rotativos y copia en Google Drive (RNF08, RF12). \\
+\hline
+Restauración fallida porque la copia también está dañada. & B & A & No se puede volver a un estado sano. & \texttt{integrity\_check} antes de restaurar, copia del archivo actual antes de sobrescribir y prueba de restauración mensual. \\
+\hline
+Acceso de terceros al panel o a los respaldos. & M & M & Se ven o alteran costos y márgenes. & Login con hash, cierre por inactividad, servidor solo en \texttt{127.0.0.1} (RNF06) y carpeta de Drive privada. \\
+\hline
+Credenciales de Google subidas al repositorio. & M & A & Acceso indebido a la cuenta de respaldo. & \texttt{.env} en \texttt{.gitignore}, \texttt{.env.example} sin valores y revisión antes de cada commit. \\
+\hline
+Falla de Internet o de Google Drive. & M & B & No se respalda en la nube ese día. & Operaciones principales locales y sincronización posterior (RNF01). \\
+\hline
+Incompatibilidad del lector de código de barras. & B & M & Venta o registro más lentos. & Pruebas con el lector real del local antes del hito 6. \\
+\hline
+Configuración incorrecta del punto de reposición. & M & M & Alertas demasiado tempranas o tardías. & Ajuste con ventas reales de 14 días, plazo por proveedor y margen de seguridad. \\
+\hline
+Datos personales del levantamiento en el repositorio público. & A & M & Exposición del RUT, la firma y los datos de contacto de personas. & Versiones públicas con esos datos tachados; originales solo por Aula. \\
+\hline
+\end{longtable}
+\normalsize
+
+\subsection{Datos personales y Ley 21.719}
+
+La Ley 21.719 reforma la Ley 19.628 y crea la Agencia de Protección de Datos Personales. Debía entrar en vigencia el 1 de diciembre de 2026; a la fecha de este informe el Congreso tramita un proyecto que la posterga, y el Senado aprobó moverla al 15 de octubre de 2027. El diseño se ajusta a ella desde ya. La versión actual no almacena información personal de clientes, pero sí trata los datos de la usuaria, de los proveedores y de la entrevistada (Tabla~\ref{tab:ley}).
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}p{2.8cm}p{2.6cm}p{2.3cm}p{2.0cm}Y@{}}
+\toprule
+\textbf{Dato} & \textbf{Finalidad} & \textbf{Base de licitud} & \textbf{Principio} & \textbf{Medida concreta} \\
+\midrule
+Nombre, correo y contraseña de la usuaria & Controlar el acceso al panel y a los respaldos & Relación laboral y consentimiento & Finalidad, seguridad & Contraseña solo como hash; el usuario no sale en reportes ni CSV; la usuaria puede ver, corregir o eliminar su cuenta. \\
+Razón social y teléfono del proveedor & Gestionar pedidos y diferencias & Relación comercial & Proporcionalidad & No se guarda el nombre ni el RUT del preventista, solo un teléfono comercial. \\
+Clientes & No se tratan & -- & Minimización & La venta guarda solo ``efectivo'' o ``tarjeta''; los datos de la tarjeta los procesa el POS. \\
+Respaldos (contienen lo anterior) & Continuidad del negocio & Interés legítimo & Seguridad, confidencialidad & Carpeta de Drive privada; credenciales OAuth en \texttt{.env}; 5 copias con fecha. \\
+Acta y documentos del levantamiento & Evidencia académica & Consentimiento firmado & Confidencialidad & En el repositorio, versiones con RUT personal, firma y datos de contacto tachados. \\
+Datos de prueba & Desarrollo & -- & Minimización & Solo datos sintéticos en el repositorio y en las demostraciones. \\
+\bottomrule
+\end{tabularx}
+\caption{Datos personales que trata el proyecto y medidas alineadas a la Ley 21.719.}
+\label{tab:ley}
+\end{table}
+
+Los titulares pueden ejercer sus derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo. En la aplicación, la usuaria puede ver, corregir o eliminar su cuenta desde el panel; al eliminarla, las ventas quedan asociadas a un usuario ``eliminado'' para no perder la historia del negocio.
+
+%==============================================
+\section{Conclusiones}
+%==============================================
+
+La propuesta busca solucionar la falta de información confiable sobre el inventario del minimarket. La aplicación permitirá registrar los productos disponibles, conocer sus existencias, mantener un historial de las adquisiciones y mermas, y actualizar automáticamente las cantidades a medida que se realizan ventas.
+
+La integración entre inventario, costos y ventas permitirá que la información generada en la operación diaria apoye las decisiones de reposición y muestre el comportamiento económico básico del negocio. Los ocho KPI definidos tienen fórmula, fuente y línea base, de modo que la Entrega 2 podrá comparar el antes y el después.
+
+El diseño prioriza el funcionamiento local debido a las características de la PYME y al uso de un único computador. Así, las operaciones principales no dependen de Internet y la conexión externa se usa solo para respaldos.
+
+Para la Entrega 2 quedan por validar con la encargada el camino de excepción de la recepción y los parámetros del punto de reposición (plazo por proveedor y días de seguridad), y por implementar los hitos del plan.
+
+%==============================================
+% Anexos
+%==============================================
+\clearpage
+\setcounter{section}{0}
+\renewcommand{\thesection}{\arabic{section}}
+
+\section*{Anexo 1: evidencia de la PYME}\addcontentsline{toc}{section}{Anexo 1: evidencia de la PYME}
+
+En este anexo se muestra una fotografía del interior del local, como respaldo de la existencia y el funcionamiento del negocio y como evidencia de la visita, y la declaración jurada de inicio de actividades del SII. En la versión pública se tacharon el teléfono, el correo y el RUT del propietario del inmueble.
+
+\begin{figure}[H]
+    \centering
+    \begin{minipage}[b]{0.3\textwidth}\centering
+    \includegraphics[width=\linewidth]{fotos/evidencia-negocio.jpg}
+    \caption{Interior del local.}
+    \label{fig:Foto_negocio}
+    \end{minipage}\hfill
+    \begin{minipage}[b]{0.66\textwidth}\centering
+    \includegraphics[width=\linewidth]{fotos/inicio-actividades.png}
+    \caption{Declaración jurada de inicio de actividades (SII), folio 21007629601.}
+    \label{fig:sii}
+    \end{minipage}
+\end{figure}
+
+\section*{Anexo 2: entrevista a la encargada}\addcontentsline{toc}{section}{Anexo 2: entrevista a la encargada}
+
+El levantamiento del proceso actual se realizó mediante preguntas dirigidas a la encargada del minimarket. A partir de sus respuestas se confirmó que el inventario se revisa visualmente todos los días, que no existe un registro sistemático de entradas, salidas o mermas y que los pedidos se realizan principalmente de manera presencial cuando pasa cada proveedor.
+
+La encargada indicó que normalmente decide cuánto comprar según la cantidad que queda, la velocidad con que se vende el producto, el espacio disponible y los mínimos exigidos por los proveedores. Los pedidos se realizan aproximadamente cada quince días y la entrega suele ocurrir entre dos y tres días después. Para recordar los compromisos de pago utiliza una libreta donde anota principalmente el proveedor, el monto total y el día esperado de llegada.
+
+En la recepción se revisan factura, cantidades, monto y fechas de vencimiento, y la mercadería se coloca directamente en las estanterías porque el local no cuenta con una bodega. En las ventas no se registra el producto ni la cantidad vendida; se conoce principalmente el total vendido, diferenciando efectivo y tarjeta. También se identificaron mermas por vencimientos, deterioro, huevos quebrados y pequeñas pérdidas de productos de menor tamaño.
+
+Esta información fue utilizada para construir el BPMN As-Is y orientar el diseño del proceso To-Be y los requerimientos funcionales del sistema.
+
+\subsection*{Ficha de la entrevista y acreditación}
+
+\begin{itemize}
+    \item \textbf{Fecha y entrevistada:} 2 de septiembre de 2026. Franca Valeska Barra Neira (encargada).
+    \item \textbf{Empresa:} Minimarket Alma Neira Muñoz.
+    \item \textbf{Consentimiento:} acta de consentimiento informado firmada, disponible en el repositorio (\texttt{assets/acta\_consentimiento\_entrevista\_publica.pdf}).
+\end{itemize}
+
+\subsection*{Puntos clave del levantamiento}
+
+\begin{itemize}
+    \item \textbf{Inventario:} control 100\,\% visual sin registro digital de stock.
+    \item \textbf{Reposición:} pedidos cada 15 días con entrega en 2 a 3 días.
+    \item \textbf{Ventas y costos:} registro diario en POS sin desglose por producto ni historial de costos.
+    \item \textbf{Impacto:} quiebres de stock y pérdida de 1 a 2 horas diarias en revisiones manuales.
+\end{itemize}
+
+\end{document}
