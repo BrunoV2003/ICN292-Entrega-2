@@ -30,35 +30,33 @@ sqlite3 db/minimarket_e2.db ".read db/schema.sql" ".read db/seed.sql" ".mode box
 
 La interpretación de los resultados está en [`docs/04-sql-consultas.md`](docs/04-sql-consultas.md).
 
-## La aplicación (opcional para la auditoría)
+## La aplicación
 
-Código en `app/SIG_Minimarket_E2_v1.2.4/`, hecho con Flask y SQLite y pensado para un computador Windows, por `localhost`.
+La aplicación está disponible para Windows y funciona de forma local. En la carpeta [`app/`](app/) del repositorio hay dos archivos comprimidos, con propósitos distintos:
 
-### Archivos ZIP: cuál usar
+- **[`SIG_market_v1.2.6.zip`](app/SIG_market_v1.2.6.zip) — APLICACIÓN (archivo principal):** contiene la versión lista para utilizar, con su ejecutable `.exe`. **Este es el archivo que se debe descargar para abrir y probar el SIG.** No es necesario descargar el código fuente ni construir el programa.
+- **[`SIG_Minimarket_E2_v1.2.6_Codigo_fuente.zip`](app/SIG_Minimarket_E2_v1.2.6_Codigo_fuente.zip) — CÓDIGO FUENTE:** contiene los archivos de desarrollo. Está destinado a quienes quieran revisar, modificar o volver a generar el ejecutable. A partir de este código se construye la aplicación distribuida en el ZIP anterior.
 
-- **`SIG_Minimarket_E2_v1.2.4_app.zip` (aplicación):** es el paquete principal para quien quiera **usar o probar el SIG**, sin necesidad de revisar el código fuente. Primero hay que descomprimirlo. Este ZIP no es, por sí mismo, un archivo `.exe`.
-- **`SIG_Minimarket_E2_v1.2.4_DESARROLLO.zip` (código fuente):** contiene los archivos con los que se desarrolla la aplicación. Desde esta versión se puede **generar el ejecutable de Windows** mediante `CONSTRUIR_EXE_WINDOWS.bat`.
+### Cómo abrir la aplicación en Windows
 
-> **Importante:** el `SIG_Minimarket_E2_v1.2.4_app.zip` original es anterior a la integración del aviso por correo. Si se necesita un `.exe` con n8n, debe construirse desde el código de desarrollo actualizado, no desde el ZIP antiguo de la aplicación.
+1. Descargar **`app/SIG_market_v1.2.6.zip`** desde GitHub.
+2. Descomprimir el archivo ZIP en una carpeta del computador.
+3. Abrir el archivo **`.exe`** que se encuentra dentro de la carpeta descomprimida.
 
-### Cómo abrir la aplicación
+**Importante:** para utilizar el SIG se debe elegir `SIG_market_v1.2.6.zip`, **no** el ZIP de código fuente. Este último se entrega para documentar el desarrollo y permitir generar nuevas versiones del ejecutable.
 
-1. Descomprimir el ZIP de la aplicación en una carpeta del computador.
-2. En Windows, hacer doble clic en `INICIAR_SIG_CON_AVISO_CORREO.bat` si está incluido en esa versión. La primera vez crea un entorno de Python e instala `requirements.txt`.
-3. Abrir `http://127.0.0.1:5000` en el navegador y mantener abierta la ventana de ejecución.
+### Código fuente y pruebas
 
-También puede iniciarse desde el código fuente, en la carpeta de la app, con:
+Si se desea trabajar con el código, descargar y descomprimir `SIG_Minimarket_E2_v1.2.6_Codigo_fuente.zip`. La aplicación está desarrollada con Flask y SQLite. En el proyecto de desarrollo se pueden instalar las dependencias y ejecutar el programa desde Python:
 
 ```bash
 pip install -r requirements.txt
 python sig_windows.py
 ```
 
-Para **crear el `.exe` en Windows**, descomprimir el ZIP de desarrollo **actualizado** y ejecutar `CONSTRUIR_EXE_WINDOWS.bat`. Se necesita Python e Internet; el proceso ejecuta las pruebas antes de construir el ejecutable.
+Las pruebas automáticas se ejecutan con `python -m pytest -q` (70 pruebas en la versión documentada). Para generar de nuevo el `.exe` en Windows se utiliza `CONSTRUIR_EXE_WINDOWS.bat` desde el código fuente.
 
-**Pruebas automáticas:** `python -m pytest -q` debe mostrar **70 passed** en la versión actualizada.
-
-Sin configurar n8n, la app funciona igual: el aviso por correo es opcional.
+Sin configurar n8n, el SIG sigue funcionando; los avisos por correo son opcionales.
 
 ## Automatización (n8n)
 
@@ -88,7 +86,8 @@ La clave del webhook **nunca** está en el repositorio.
 | `db/` | `schema.sql`, `seed.sql`, consultas, script `crear_y_consultar.py` y resultados |
 | `bpmn/` | Modelo Bizagi (`.bpm`), exportación BPMN 2.0 (`.bpmn`) e imágenes |
 | `n8n/` | Flujo de n8n, probador y evidencias |
-| `app/` | Código fuente de la aplicación (con 70 pruebas) |
+| `app/SIG_market_v1.2.6.zip` | **Aplicación para Windows: ZIP principal con el ejecutable `.exe`** |
+| `app/SIG_Minimarket_E2_v1.2.6_Codigo_fuente.zip` | Código fuente de la versión 1.2.6; permite revisar el desarrollo y generar el `.exe` |
 | `presentacion/` | Diapositivas de la defensa |
 | `informe/` | Informe E2 en PDF y .zip (LaTeX) |
 | `ENLACE_GITHUB.txt` | URL y tag de la versión defendida |
