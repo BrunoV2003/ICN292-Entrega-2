@@ -73,7 +73,7 @@ La clave del webhook **nunca** está en el repositorio.
 | `n8n/` | Flujo de n8n, probador y evidencias |
 | `app/` | Código fuente de la aplicación (con 70 pruebas) |
 | `presentacion/` | Diapositivas de la defensa |
-| `informe/` | Informe E2 en PDF y Word |
+| `informe/` | Informe E2 en PDF y .zip(latex) |
 | `ENLACE_GITHUB.txt` | URL y tag de la versión defendida |
 
 ## Versiones usadas
