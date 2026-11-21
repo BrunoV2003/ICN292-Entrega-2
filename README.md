@@ -101,3 +101,4 @@ La clave del webhook **nunca** está en el repositorio.
 | Flask / Waitress | 3.1.3 / 3.0.2 |
 | Bizagi Modeler | 4.3.0.008 |
 | n8n | n8n Cloud (nodos Webhook v2, Code v2, IF v2, Gmail v2.1) |
+-
